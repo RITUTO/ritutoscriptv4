@@ -1,0 +1,15 @@
+{
+  "name": "ritutoscriptv4",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "bun run src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "mathjs": "^14.0.1"
+  }
+}
