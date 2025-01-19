@@ -50,12 +50,13 @@ log([test])
 
 # for
 
-````js
+```js
 //for (x in start to end)
 for (i in 1 to 5) {
     log({i})
 }
-``
+```
+
 ```bash
 1
 2
@@ -63,4 +64,3 @@ for (i in 1 to 5) {
 4
 5
 ```
-````
