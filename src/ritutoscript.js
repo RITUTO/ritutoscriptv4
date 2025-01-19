@@ -9,18 +9,14 @@ module.exports = class ritutoscript {
     functionarg = "";
     functiondummyname = "";
     functionmode = 0;
-
+    forv={}
     constructor(context = {}) {
-        this.values = { ...context }; // 引数で初期化可能
+        this.values = { ...context }; 
     }
 
     conpile(expression) {
         expression.forEach((line, i) => {
-            if (line == ""){
-                return;
-            }
             line = line.trim();
-
             if (this.functionmode === 1) {
                 if (line === "}") {
                     this.functionmode = 0;
@@ -44,40 +40,76 @@ module.exports = class ritutoscript {
                 this.functiondummy.push(line);
                 return;
             }
-
+            if (this.functionmode == 3){
+                if (line === "}") {
+                    for (let i=this.forv.start; i<this.forv.end+1;i++){
+                        const obj = {}
+                        obj[this.forv.loopVer] = i
+                        new ritutoscript(obj).conpile(this.functiondummy)
+                    }
+                    
+                    this.functionmode = 0;
+                    this.functiondummy = [];
+                    this.forv = {
+                    }
+                    return;
+                }
+                this.functiondummy.push(line);
+                return;
+            }
             if (line.startsWith("log(")) {
                 const match = line.match(/\((.*)\)/);
                 if (match) {
                     const logContent = match[1];
                     console.log(this.evaluateExpression(logContent, i));
                 }
-            } else if (line.startsWith("set")) {
+            } 
+            else if (line.startsWith("set")) {
                 const match = line.match(/set\s+(\w+)\s*=\s*(.*)/);
                 if (match) {
                     const value = this.evaluateExpression(match[2], i);
                     this.values[match[1]] = value;
                 }
-            } else if (line.startsWith("global set")) {
+            } 
+            else if (line.startsWith("global set")) {
                 const match = line.match(/global\s+set\s+(\w+)\s*=\s*(.*)/);
                 if (match) {
                     const value = this.evaluateExpression(match[2], i);
                     globalvalues[match[1]] = value;
                 }
-            } else if (line.startsWith("function")) {
+            } 
+            else if (line.startsWith("function")) {
                 const match = line.match(/function\s+(\w+)\s*\(\s*(\w*)\s*\)\s*\{/);
                 if (match) {
                     this.functiondummyname = match[1];
                     this.functionarg = match[2];
                     this.functionmode = 1;
                 }
-            } else if (line.startsWith("global function")) {
+            }
+            else if (line.startsWith("global function")) {
                 const match = line.match(/global\s+function\s+(\w+)\s*\(\s*(\w*)\s*\)\s*\{/);
                 if (match) {
                     this.functiondummyname = match[1];
                     this.functionarg = match[2];
                     this.functionmode = 2;
+                }else {
+                    console.error(`global function 文の書き方がちがいますがあります at line: ${i + 1}`);
                 }
-            } else {
+            } else if (line.startsWith("for")) {
+                const matchFor = line.match(/for\s+\((\w+)\s+in\s+(\d+)\s+to\s+(\d+)\)\s*\{/);
+                if (matchFor) {
+                    const start = parseInt(matchFor[2], 10); 
+                    const end = parseInt(matchFor[3], 10);
+                    this.forv.loopVer = matchFor[1]
+                    this.forv.start = start
+                    this.forv.end = end
+                    this.functionmode = 3
+                }else {
+                    console.error(`for文の書き方が違いますが at line: ${i + 1}`);
+                }
+            
+            }
+            else {
                 const match = line.match(/(\w+)\s*\(\s*(.*?)\s*\)/);
                 if (match) {
                     const funcName = match[1];
@@ -90,7 +122,7 @@ module.exports = class ritutoscript {
                     } else {
                         console.error(`エラー: 関数 ${funcName} が定義されていません at line: ${i + 1}`);
                     }
-                } else {
+                }  else {
                     console.error(`エラー: 不明な文字があります at line: ${i + 1}`);
                 }
             }
