@@ -1,57 +1,116 @@
 const math = require('mathjs');
 const globalvalues = {};
+const globalfunctions = {};
 
 module.exports = class ritutoscript {
     values = {};
+    functions = {};
+    functiondummy = [];
+    functionarg = "";
+    functiondummyname = "";
+    functionmode = 0;
 
-    constructor() {}
+    constructor(context = {}) {
+        this.values = { ...context }; // 引数で初期化可能
+    }
 
-    /** @param {string[]} expression  */
     conpile(expression) {
-        expression.forEach((line,i) => {
-            if (line.startsWith("log(")) {
-                const match = line.match(/\((.*)\)/);  // ここを修正
-                if (match) {
-                    const logContent = match[1];  // 括弧内の内容を取得
-                    console.log(this.tostringnumber(logContent,i));  // その内容を処理
-                }
+        expression.forEach((line, i) => {
+            if (line == ""){
+                return;
             }
-            if (line.startsWith("set")){//set str = strnum
-                const match = line.match(/set\s+(\w+)\s*=\s*(\w+)/);
+            line = line.trim();
+
+            if (this.functionmode === 1) {
+                if (line === "}") {
+                    this.functionmode = 0;
+                    this.functions[this.functiondummyname] = { code: this.functiondummy, arg: this.functionarg };
+                    this.functiondummy = [];
+                    this.functiondummyname = "";
+                    return;
+                }
+                this.functiondummy.push(line);
+                return;
+            }
+
+            if (this.functionmode === 2) {
+                if (line === "}") {
+                    this.functionmode = 0;
+                    globalfunctions[this.functiondummyname] = { code: this.functiondummy, arg: this.functionarg };
+                    this.functiondummy = [];
+                    this.functiondummyname = "";
+                    return;
+                }
+                this.functiondummy.push(line);
+                return;
+            }
+
+            if (line.startsWith("log(")) {
+                const match = line.match(/\((.*)\)/);
                 if (match) {
-                    this.values[match[1]] = this.tostringnumber(match[2], i);
+                    const logContent = match[1];
+                    console.log(this.evaluateExpression(logContent, i));
+                }
+            } else if (line.startsWith("set")) {
+                const match = line.match(/set\s+(\w+)\s*=\s*(.*)/);
+                if (match) {
+                    const value = this.evaluateExpression(match[2], i);
+                    this.values[match[1]] = value;
+                }
+            } else if (line.startsWith("global set")) {
+                const match = line.match(/global\s+set\s+(\w+)\s*=\s*(.*)/);
+                if (match) {
+                    const value = this.evaluateExpression(match[2], i);
+                    globalvalues[match[1]] = value;
+                }
+            } else if (line.startsWith("function")) {
+                const match = line.match(/function\s+(\w+)\s*\(\s*(\w*)\s*\)\s*\{/);
+                if (match) {
+                    this.functiondummyname = match[1];
+                    this.functionarg = match[2];
+                    this.functionmode = 1;
+                }
+            } else if (line.startsWith("global function")) {
+                const match = line.match(/global\s+function\s+(\w+)\s*\(\s*(\w*)\s*\)\s*\{/);
+                if (match) {
+                    this.functiondummyname = match[1];
+                    this.functionarg = match[2];
+                    this.functionmode = 2;
+                }
+            } else {
+                const match = line.match(/(\w+)\s*\(\s*(.*?)\s*\)/);
+                if (match) {
+                    const funcName = match[1];
+                    const funcArg = match[2];
+
+                    if (this.functions[funcName]) {
+                        new ritutoscript({ [this.functions[funcName].arg]: this.evaluateExpression(funcArg, i) }).conpile(this.functions[funcName].code);
+                    } else if (globalfunctions[funcName]) {
+                        new ritutoscript({ [globalfunctions[funcName].arg]: this.evaluateExpression(funcArg, i) }).conpile(globalfunctions[funcName].code);
+                    } else {
+                        console.error(`エラー: 関数 ${funcName} が定義されていません at line: ${i + 1}`);
+                    }
+                } else {
+                    console.error(`エラー: 不明な文字があります at line: ${i + 1}`);
                 }
             }
         });
     }
 
-    tostringnumber(str,i) {
+    evaluateExpression(str, i) {
+        const replacedStr = this.replacevalue2(this.replacevalue1(str, this.values), globalvalues);
         try {
-            // mathjsのevaluateを使って式を評価
-            return math.evaluate(this.replacevalue2(this.replacevalue1(str, this.values), globalvalues));
+            return math.evaluate(replacedStr);
         } catch (error) {
-            if (error.message.includes("Undefined symbol "))
-            console.error('式を実行する際にエラーが出ました 不明な文字があります:at line:+' +i+1);
-            return undefined;
+            return replacedStr;
         }
     }
 
     replacevalue1(str, obj) {
-        return str.replace(/{(.*?)}/g, (match, key) => {
-            if (obj[key] !== undefined) {
-                return obj[key];
-            }
-            return undefined;
-        });
+        return str.replace(/{(.*?)}/g, (match, key) => obj[key] ?? undefined);
     }
 
     replacevalue2(str, obj) {
-        return str.replace(/\[(.*?)\]/g, (match, key) => {  // 正規表現を修正
-            if (obj[key] !== undefined) {
-                return obj[key];
-            }
-            return undefined;
-        });
+        return str.replace(/\[(.*?)\]/g, (match, key) => obj[key] ?? undefined);
     }
-    
-}
+};

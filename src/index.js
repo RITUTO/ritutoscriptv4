@@ -6,19 +6,18 @@ if (args[0] == "help"){
     return
 }
 if (args[0] == "run"){
-    new ritutoscript().conpile(require("fs").readFileSync(args[1], "utf-8").split("\n"))
+    new ritutoscript({}).conpile(require("fs").readFileSync(args[1], "utf-8").split("\n"))
     return
 }
 const readline = require('readline');
-const math = require('mathjs');
 
 // readline インターフェースを作成
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
-const rs = new ritutoscript()
 function runrs() {
+  const rs = new ritutoscript({})
   rl.question('> ', (input) => {
     if (input.toLowerCase() === 'exit') {
       console.log('終了します。');
