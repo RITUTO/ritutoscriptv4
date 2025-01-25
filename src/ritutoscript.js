@@ -14,8 +14,9 @@ module.exports = class ritutoscript {
         this.values = { ...context }; 
     }
 
-    conpile(expression) {
-        expression.forEach((line, i) => {
+    async conpile(expression) {
+        for (let i = 0; i < expression.length; i++) {
+            let line = expression[i];
             line = line.trim();
             if (this.functionmode === 1) {
                 if (line === "}") {
@@ -23,10 +24,10 @@ module.exports = class ritutoscript {
                     this.functions[this.functiondummyname] = { code: this.functiondummy, arg: this.functionarg };
                     this.functiondummy = [];
                     this.functiondummyname = "";
-                    return;
+                    continue;
                 }
                 this.functiondummy.push(line);
-                return;
+                continue;
             }
 
             if (this.functionmode === 2) {
@@ -35,10 +36,10 @@ module.exports = class ritutoscript {
                     globalfunctions[this.functiondummyname] = { code: this.functiondummy, arg: this.functionarg };
                     this.functiondummy = [];
                     this.functiondummyname = "";
-                    return;
+                    continue;
                 }
                 this.functiondummy.push(line);
-                return;
+                continue;
             }
             if (this.functionmode == 3){
                 if (line === "}") {
@@ -52,18 +53,20 @@ module.exports = class ritutoscript {
                     this.functiondummy = [];
                     this.forv = {
                     }
-                    return;
+                    continue;
                 }
                 this.functiondummy.push(line);
-                return;
+                continue;
             }
             if (line.startsWith("log(")) {
                 const match = line.match(/\((.*)\)/);
                 if (match) {
                     const logContent = match[1];
-                    console.log(this.evaluateExpression(logContent, i));
+                    const expressions = logContent.split(",").map(expr => expr.trim()); // Split by commas
+                    const results = expressions.map(expr => this.evaluateExpression(expr, i)); // Evaluate each expression
+                    console.log(...results); // Log all results
                 }
-            } 
+            }
             else if (line.startsWith("set")) {
                 const match = line.match(/set\s+(\w+)\s*=\s*(.*)/);
                 if (match) {
@@ -76,6 +79,12 @@ module.exports = class ritutoscript {
                 if (match) {
                     const value = this.evaluateExpression(match[2], i);
                     globalvalues[match[1]] = value;
+                }
+            }  else if (line.startsWith("input")) {
+                const match = line.match(/input\s+(\w+)\s*=\s*(.*)/);
+                if (match) {
+                    const v = await this.input(this.evaluateExpression(match[2], i))
+                    this.values[match[1]] = v;
                 }
             } 
             else if (line.startsWith("function")) {
@@ -126,7 +135,7 @@ module.exports = class ritutoscript {
                     console.error(`エラー: 不明な文字があります at line: ${i + 1}`);
                 }
             }
-        });
+        };
     }
 
     evaluateExpression(str, i) {
@@ -145,4 +154,19 @@ module.exports = class ritutoscript {
     replacevalue2(str, obj) {
         return str.replace(/\[(.*?)\]/g, (match, key) => obj[key] ?? undefined);
     }
+
+input(prompt) {
+    const readline = require('readline');
+    return new Promise((resolve) => {
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+        });
+        rl.question(prompt+":", (answer) => {
+            resolve(answer);
+            rl.close();
+        });
+    });
+}
 };
+

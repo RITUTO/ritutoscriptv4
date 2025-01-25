@@ -64,3 +64,15 @@ for (i in 1 to 5) {
 4
 5
 ```
+
+# input
+
+```js
+input test = "What's your name?"
+log("hello",{test})
+```
+
+```bash
+What's your name?:rituto
+hello rituto
+```
