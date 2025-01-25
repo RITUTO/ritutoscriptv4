@@ -1,2 +1,1 @@
-input test = What's your name?
-log("hello",{test})
+runjs(const v1 = 5,v1+5)

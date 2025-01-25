@@ -76,3 +76,22 @@ log("hello",{test})
 What's your name?:rituto
 hello rituto
 ```
+
+# runjs
+
+```js
+set js = runjs(const v1 = 5,v1+5)
+log({js})
+```
+
+または
+
+```js
+runjs(const v1 = 5,v1+5)
+```
+
+```bash
+10
+```
+
+※runjs は引数を eval しています

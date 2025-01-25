@@ -12,13 +12,14 @@ if (args[0] == "run"){
 const readline = require('readline');
 
 // readline インターフェースを作成
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+
 function runrs() {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
   const rs = new ritutoscript({})
-  rl.question('> ', (input) => {
+  rl.question('> ', async (input) => {
     if (input.toLowerCase() === 'exit') {
       console.log('終了します。');
       rl.close();
@@ -27,7 +28,8 @@ function runrs() {
 
     // 入力された式を計算
     try {
-        rs.conpile([input.toLowerCase()])
+      rl.close();
+        await rs.conpile(input.toLowerCase().split("\\n"))
     } catch (err) {
       console.log('無効なコードです。',err);
     }
