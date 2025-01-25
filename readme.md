@@ -95,3 +95,9 @@ runjs(const v1 = 5,v1+5)
 ```
 
 ※runjs は引数を eval しています
+
+# サンプル など
+
+deno みたいな感じに ritutoscript run https://example.com/
+で実行できます
+[ritutoscript サンプル 一覧](https://ritutoscript.rituto.net/samples/)
